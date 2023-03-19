@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include <AdptArray.h>
+#include <stdlib.h>
+#include <string.h>
+#include "AdptArray.h"
 
 // PAdptArray CreateAdptArray(COPY_FUNC, DEL_FUNC,PRINT_FUNC);
 // void DeleteAdptArray(PAdptArray);
@@ -17,17 +19,26 @@ typedef struct AdptArray_
     PRINT_FUNC printFunc;
 }AdptArray;
 
-// PElement GetAdptArrayAt(PAdptArray, int){
-//     return 
-// }
+PElement GetAdptArrayAt(PAdptArray array, int i){
+	if(array->ArrSize > i) return NULL;
+    return array->pElemArr[i];
+}
 
-// int GetAdptArraySize(PAdptArray){
-//     return
-// }
+int GetAdptArraySize(PAdptArray array){
+    return array->ArrSize;
+}
 
-// void PrintDB(PAdptArray){
+void PrintDB(PAdptArray array){
+	for (size_t i = 0; i < array->ArrSize; i++)
+	{
+		if (array->pElemArr!=NULL)
+		{
+			array->printFunc(array->pElemArr[i]);
+		}
+		
+	}
 
-// }
+}
 
 
 // notice that 'PRINT_FUNC printFunc' added to this function, check all other functions if missing
