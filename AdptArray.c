@@ -3,13 +3,6 @@
 #include <string.h>
 #include "AdptArray.h"
 
-// PAdptArray CreateAdptArray(COPY_FUNC, DEL_FUNC,PRINT_FUNC);
-// void DeleteAdptArray(PAdptArray);
-// Result SetAdptArrayAt(PAdptArray, int, PElement);
-// PElement GetAdptArrayAt(PAdptArray, int);
-// int GetAdptArraySize(PAdptArray);
-// void PrintDB(PAdptArray);
-
 typedef struct AdptArray_
 {
 	int ArrSize;
@@ -20,81 +13,129 @@ typedef struct AdptArray_
 }AdptArray;
 
 PElement GetAdptArrayAt(PAdptArray array, int i){
-	if(array->ArrSize > i) return NULL;
-    return array->pElemArr[i];
+	if(!array) return NULL;
+	if(i < 0 || array->ArrSize <= i|| array->pElemArr[i] == NULL) 
+	{
+	return NULL;
+	}
+	
+	PElement elemAt = array->copyFunc(array->pElemArr[i]);
+	if (!elemAt) return NULL;
+	
+    return elemAt;
 }
 
 int GetAdptArraySize(PAdptArray array){
+	if (!array) return -1;
+	
     return array->ArrSize;
 }
 
 void PrintDB(PAdptArray array){
-	for (size_t i = 0; i < array->ArrSize; i++)
+	if (!array) return;
+	
+	for (int i = 0; i < array->ArrSize; i++)
 	{
-		if (array->pElemArr!=NULL)
+		if (array->pElemArr[i]!=NULL)
 		{
 			array->printFunc(array->pElemArr[i]);
 		}
-		
 	}
-
 }
 
-
-// notice that 'PRINT_FUNC printFunc' added to this function, check all other functions if missing
 PAdptArray CreateAdptArray(COPY_FUNC copyFunc_, DEL_FUNC delFunc_, PRINT_FUNC printFunc)
 {
+	if(copyFunc_ == NULL || delFunc_ == NULL || printFunc == NULL) return NULL;
+
 	PAdptArray pArr = (PAdptArray)malloc(sizeof(AdptArray));
-	if (pArr == NULL)
-		return NULL;
+	if (pArr == NULL) return NULL;
+		
 	pArr->ArrSize = 0;
 	pArr->pElemArr = NULL;
-	pArr->delFunc = delFunc_;
 	pArr->copyFunc = copyFunc_;
     pArr->printFunc = printFunc;
+	pArr->delFunc = delFunc_;
+	
 	return pArr;
 }
-////////B.
+
 Result SetAdptArrayAt(PAdptArray pArr, int idx, PElement pNewElem)
 {
-	PElement* newpElemArr;
 	if (pArr == NULL)
 		return FAIL;
-
-	if (idx >= pArr->ArrSize)
+	else if (pNewElem == NULL)
+		return FAIL;
+	else if (idx < 0)
+		return FAIL;
+	else if (pArr->ArrSize == 0)
 	{
-		
-// Extend Array
-		if ((newpElemArr = (PElement*)calloc((idx + 1), sizeof(PElement))) == NULL)
+		pArr->pElemArr = (PElement*)malloc(sizeof(PElement) * (idx + 1));
+		if (pArr->pElemArr == NULL)
 			return FAIL;
-		memcpy(newpElemArr, pArr->pElemArr, (pArr->ArrSize) * sizeof(PElement));
-		free(pArr->pElemArr);
-		pArr->pElemArr = newpElemArr;
+
+		for (int i = 0; i < idx; i++)
+		{
+			pArr->pElemArr[i] = NULL;
+		}
+		pArr->pElemArr[idx] = pArr->copyFunc(pNewElem);
+		pArr->ArrSize = idx + 1;
+		return SUCCESS;
 	}
+	else if (idx < pArr->ArrSize)
+	{
+		PElement pOldElem = pArr->pElemArr[idx];
+		if (pOldElem == NULL)
+			return FAIL;
+		pArr->delFunc(pOldElem);
+		pArr->pElemArr[idx] = pArr->copyFunc(pNewElem);
+		return SUCCESS;	
+	}
+	else if (idx >= pArr->ArrSize)
+	{
+		PElement* newpElemArr=(PElement*)calloc((idx + 1), sizeof(PElement));
+			for (int i = 0; i < pArr->ArrSize; i++)
+			{
+				if (pArr->pElemArr[i] != NULL)
+				{
+				newpElemArr[i] = pArr->copyFunc(pArr->pElemArr[i]);
+				pArr->delFunc(pArr->pElemArr[i]);
+				}
+			}
 
-	// Delete Previous Elem
-	pArr->delFunc((pArr->pElemArr)[idx]);
-	(pArr->pElemArr)[idx] = pArr->copyFunc(pNewElem);
+			free(pArr->pElemArr);
+			pArr->pElemArr = newpElemArr;
+			pArr->pElemArr[idx] = pArr->copyFunc(pNewElem);
+			pArr->ArrSize = idx + 1;
 
-	// Update Array Size
-	pArr->ArrSize = (idx >= pArr->ArrSize) ? (idx + 1) : pArr->ArrSize;
-	return SUCCESS;
+		return SUCCESS;
+		}
+	
+	
+	return FAIL;
 }
-//C.
+
 
 void DeleteAdptArray(PAdptArray pArr)
 {
-	int i;
 	if (pArr == NULL)
 		return;
-	for(i = 0; i < pArr->ArrSize; ++i)
+	else if (pArr->pElemArr == NULL)
 	{
-		if ((pArr->pElemArr)[1])
+		free(pArr);
+		return;
+	}
+	else{
+	for(int i = 0; i < pArr->ArrSize; i++)
+	{
+		if ((pArr->pElemArr)[i])
 		{
 			pArr->delFunc((pArr->pElemArr)[i]);
 		}
 		
 	}
+	pArr->ArrSize = 0;
+	pArr->delFunc = NULL;
 	free(pArr->pElemArr);
 	free(pArr);
+	}
 }
